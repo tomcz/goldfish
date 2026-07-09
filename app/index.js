@@ -135,6 +135,13 @@ function updateErrorAlert(message) {
   showElement(errorAlert);
 }
 
+function showSection(section) {
+  showElement(section);
+  window.setTimeout(function () {
+    section.querySelector(".focus-target").focus();
+  });
+}
+
 function updateEncryptResults(pwd, key, ttl) {
   const link = createDecryptLink(pwd, key);
   const ttlTxt = ttl === "1" ? "1 hour" : `${ttl} hours`;
@@ -232,22 +239,12 @@ document.querySelectorAll("a.tab-link").forEach((elt) => {
     document.querySelectorAll("section.tab-body").forEach((body) => {
       hideElement(body);
     });
-    const section = document.querySelector(elt.hash);
-    showElement(section);
-    window.setTimeout(function () {
-      section.querySelector(".focus-target").focus();
-    });
+    showSection(document.querySelector(elt.hash));
   });
 });
 
 if (setDecryptKeyFromLocation()) {
-  showElement(document.getElementById("decrypt-tab"));
-  window.setTimeout(function () {
-    decryptKey.focus();
-  });
+  showSection(document.getElementById("decrypt-tab"));
 } else {
-  showElement(document.getElementById("encrypt-tab"));
-  window.setTimeout(function () {
-    document.getElementById("encrypt-value").focus();
-  });
+  showSection(document.getElementById("encrypt-tab"));
 }
