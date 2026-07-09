@@ -315,17 +315,19 @@ func setupLogging(ctx context.Context, _ *cli.Command) (context.Context, error) 
 	default:
 		level = log.LevelInfo
 	}
+	args := []any{"build", version}
 	switch logFormat {
 	case "text":
 		opts := &log.HandlerOptions{Level: level}
 		h := log.NewTextHandler(os.Stderr, opts)
-		log.SetDefault(log.New(h))
+		log.SetDefault(log.New(h).With(args...))
 	case "json":
 		opts := &log.HandlerOptions{Level: level}
 		h := log.NewJSONHandler(os.Stderr, opts)
-		log.SetDefault(log.New(h))
+		log.SetDefault(log.New(h).With(args...))
 	default:
 		log.SetLogLoggerLevel(level)
+		log.SetDefault(log.Default().With(args...))
 	}
 	return ctx, nil
 }
