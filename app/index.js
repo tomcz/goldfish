@@ -29,12 +29,19 @@ function setDecryptKeyFromLocation() {
   return false;
 }
 
-function encodeBase64(bytes) {
-  const numbers = new Uint8Array(bytes);
-  return btoa(String.fromCharCode(...numbers));
+// byteArray is a Uint8Array
+function encodeBase64(byteArray) {
+  if ("toBase64" in byteArray) {
+    return byteArray.toBase64();
+  }
+  return btoa(String.fromCharCode(...byteArray));
 }
 
+// b64Text is a string
 function decodeBase64(b64Text) {
+  if ("fromBase64" in Uint8Array) {
+    return Uint8Array.fromBase64(b64Text);
+  }
   const binaryString = atob(b64Text);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
@@ -54,8 +61,8 @@ function createPassword() {
 
 async function pwdToKey(password, salt) {
   const enc = new TextEncoder().encode(password);
-  const keyMaterial = await crypto.subtle.importKey("raw", enc, "PBKDF2", false, ["deriveBits", "deriveKey"]);
-  return crypto.subtle.deriveKey(
+  const keyMaterial = await window.crypto.subtle.importKey("raw", enc, "PBKDF2", false, ["deriveBits", "deriveKey"]);
+  return window.crypto.subtle.deriveKey(
     { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
@@ -65,25 +72,25 @@ async function pwdToKey(password, salt) {
 }
 
 async function encryptSecret(pwd, plainText) {
-  const saltBytes = crypto.getRandomValues(new Uint8Array(16));
+  const secret = new TextEncoder().encode(plainText);
+  const saltBytes = window.crypto.getRandomValues(new Uint8Array(16));
   const ivBytes = window.crypto.getRandomValues(new Uint8Array(12));
 
   const key = await pwdToKey(pwd, saltBytes);
-  const secret = new TextEncoder().encode(plainText);
   const encBytes = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: ivBytes }, key, secret);
 
-  return [encodeBase64(saltBytes), encodeBase64(ivBytes), encodeBase64(encBytes)].join("~");
+  return [encodeBase64(saltBytes), encodeBase64(ivBytes), encodeBase64(new Uint8Array(encBytes))].join(".");
 }
 
 async function decryptSecret(pwd, cipherText) {
-  const [saltText, ivText, encText] = cipherText.split("~");
+  const [saltText, ivText, encText] = cipherText.split(".");
   const saltBytes = decodeBase64(saltText);
   const ivBytes = decodeBase64(ivText);
   const encBytes = decodeBase64(encText);
 
   const key = await pwdToKey(pwd, saltBytes);
-
   const secret = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: ivBytes }, key, encBytes);
+
   return new TextDecoder().decode(secret);
 }
 
