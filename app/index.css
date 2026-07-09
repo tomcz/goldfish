@@ -1,14 +1,28 @@
-.initially-hidden {
-  display: none;
+header.container {
+  padding-bottom: 0;
+}
+
+main.container {
+  padding-top: 0;
+}
+
+footer.container {
+  font-size: 0.8rem;
+  text-align: center;
+  color: var(--pico-muted-color);
+}
+
+hgroup a {
+  color: unset;
+  text-decoration: unset;
 }
 
 #error-alert {
   color: var(--pico-form-element-invalid-focus-color);
 }
 
-hgroup a {
-  color: unset;
-  text-decoration: unset;
+#encrypt-value {
+  height: 10rem;
 }
 
 fieldset {
@@ -17,10 +31,6 @@ fieldset {
 
 fieldset button:last-child {
   margin-bottom: 0;
-}
-
-#encrypt-value {
-  height: 10rem;
 }
 
 pre.copy-me {
@@ -50,4 +60,8 @@ pre.copy-me.is-copied:after {
   position: absolute;
   bottom: 4px;
   right: 4px;
+}
+
+.initially-hidden {
+  display: none;
 }
