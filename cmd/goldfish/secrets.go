@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"io"
 	"regexp"
-	"strings"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type secretWithTTL struct {
@@ -22,10 +20,20 @@ type secretStore interface {
 	io.Closer
 }
 
-var validSecretKey = regexp.MustCompile(`^[a-f0-9]{32}$`)
+var (
+	secretKeyLength   = 42
+	secretKeyAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+	validSecretKey    = regexp.MustCompile(fmt.Sprintf("^[%s]{%d}$", secretKeyAlphabet, secretKeyLength))
+)
 
 func newSecretKey() string {
-	return strings.ToLower(strings.ReplaceAll(uuid.NewString(), "-", ""))
+	alen := byte(len(secretKeyAlphabet))
+	key := make([]byte, secretKeyLength)
+	_, _ = rand.Read(key)
+	for i := range key {
+		key[i] = secretKeyAlphabet[key[i]%alen]
+	}
+	return string(key)
 }
 
 func newSecretStore(ctx context.Context) (secretStore, error) {

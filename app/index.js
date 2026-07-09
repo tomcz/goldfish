@@ -7,6 +7,10 @@ const encryptResultDiv = document.getElementById("encrypt-result");
 const decryptResultDiv = document.getElementById("decrypt-result");
 const decryptKey = document.getElementById("decrypt-key");
 
+const passwordLength = 42;
+const passwordAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+decryptKey.pattern = `[${passwordAlphabet}]{${passwordLength}}x[${passwordAlphabet}]{${passwordLength}}`;
+
 function createDecryptLink(pwd, key) {
   return `${window.location.origin}${window.location.pathname}#${pwd}x${key}`;
 }
@@ -40,7 +44,12 @@ function decodeBase64(b64Text) {
 }
 
 function createPassword() {
-  return window.crypto.randomUUID().replaceAll("-", "").toLowerCase();
+  const numbers = window.crypto.getRandomValues(new Uint8Array(passwordLength));
+  let pwd = "";
+  for (const num of numbers) {
+    pwd += passwordAlphabet[num % passwordAlphabet.length];
+  }
+  return pwd;
 }
 
 async function pwdToKey(pwd) {

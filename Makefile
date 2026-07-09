@@ -1,7 +1,7 @@
 GITCOMMIT := $(shell git rev-parse --short=7 HEAD 2>/dev/null)
 
 .PHONY: precommit
-precommit: clean format lint test compile
+precommit: clean tidy format lint test compile
 
 .PHONY: format
 format:
@@ -9,6 +9,10 @@ format:
 ifneq ($(shell which npx),)
 	npx prettier --print-width 120 --bracket-same-line --write "app/*.(js|css|html)"
 endif
+
+.PHONY: tidy
+tidy:
+	go mod tidy
 
 .PHONY: lint
 lint:
