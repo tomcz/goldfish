@@ -3,8 +3,8 @@
 const errorAlert = document.getElementById("error-alert");
 const encryptForm = document.querySelector("#encrypt-tab form");
 const decryptForm = document.querySelector("#decrypt-tab form");
-const encryptResultDiv = document.getElementById("encrypt-result");
-const decryptResultDiv = document.getElementById("decrypt-result");
+const encryptResult = document.getElementById("encrypt-result");
+const decryptResult = document.getElementById("decrypt-result");
 const decryptKey = document.getElementById("decrypt-key");
 
 const passwordLength = 42;
@@ -141,15 +141,15 @@ function updateEncryptResults(pwd, key, ttl) {
   const expiry = Date.now() + parseInt(ttl) * 60 * 60 * 1000;
   const expiryTxt = new Date(expiry).toLocaleString();
 
-  encryptResultDiv.querySelector(".copy-me").textContent = link;
-  encryptResultDiv.querySelector(".expire-in").textContent = ttlTxt;
-  encryptResultDiv.querySelector(".expire-at").textContent = expiryTxt;
-  showElement(encryptResultDiv);
+  encryptResult.querySelector(".copy-me").textContent = link;
+  encryptResult.querySelector(".expire-in").textContent = ttlTxt;
+  encryptResult.querySelector(".expire-at").textContent = expiryTxt;
+  showElement(encryptResult);
 }
 
 function updateDecryptResults(secret) {
-  decryptResultDiv.querySelector(".copy-me").textContent = secret;
-  showElement(decryptResultDiv);
+  decryptResult.querySelector(".copy-me").textContent = secret;
+  showElement(decryptResult);
 }
 
 encryptForm.addEventListener("submit", (evt) => {
@@ -160,7 +160,7 @@ encryptForm.addEventListener("submit", (evt) => {
   const pwd = createPassword();
 
   hideElement(errorAlert);
-  hideElement(encryptResultDiv);
+  hideElement(encryptResult);
   disableForm(encryptForm);
 
   encryptSecret(pwd, secret)
@@ -184,7 +184,7 @@ decryptForm.addEventListener("submit", (evt) => {
   const shared = parseDecryptKey();
 
   hideElement(errorAlert);
-  hideElement(decryptResultDiv);
+  hideElement(decryptResult);
   disableForm(decryptForm);
 
   getSecret(shared.key)
@@ -215,7 +215,7 @@ document.querySelectorAll(".initially-hidden").forEach((elt) => {
   elt.classList.remove("initially-hidden");
 });
 
-document.querySelectorAll("div.card pre").forEach((pre) => {
+document.querySelectorAll("pre.copy-me").forEach((pre) => {
   pre.addEventListener("click", () => {
     navigator.clipboard.writeText(pre.textContent).then(() => {
       pre.classList.add("is-copied");
@@ -226,21 +226,28 @@ document.querySelectorAll("div.card pre").forEach((pre) => {
   });
 });
 
-document.querySelectorAll("#tab-row button").forEach((btn) => {
-  btn.addEventListener("shown.bs.tab", () => {
-    const selector = `${btn.dataset.bsTarget} .focus-target`;
-    document.querySelector(selector).focus();
+document.querySelectorAll("a.tab-link").forEach((elt) => {
+  elt.addEventListener("click", (evt) => {
+    evt.preventDefault();
+    document.querySelectorAll("section.tab-body").forEach((body) => {
+      hideElement(body);
+    });
+    const section = document.querySelector(elt.hash);
+    showElement(section);
+    window.setTimeout(function () {
+      section.querySelector(".focus-target").focus();
+    });
   });
 });
 
 if (setDecryptKeyFromLocation()) {
-  document.querySelectorAll("#encrypt-tab-btn, #encrypt-tab").forEach((elt) => {
-    elt.classList.remove("active");
+  showElement(document.getElementById("decrypt-tab"));
+  window.setTimeout(function () {
+    decryptKey.focus();
   });
-  document.querySelectorAll("#decrypt-tab-btn, #decrypt-tab").forEach((elt) => {
-    elt.classList.add("active");
-  });
-  document.querySelector("#decrypt-tab .focus-target").focus();
 } else {
-  document.querySelector("#encrypt-tab .focus-target").focus();
+  showElement(document.getElementById("encrypt-tab"));
+  window.setTimeout(function () {
+    document.getElementById("encrypt-value").focus();
+  });
 }

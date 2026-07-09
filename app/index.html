@@ -2,138 +2,90 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
     <title>Goldfish</title>
-    <link rel="stylesheet" href="lib/bootstrap.min.css" />
+    <link rel="stylesheet" href="lib/pico.indigo.min.css" />
     <link rel="stylesheet" href="index.css" />
-    <script src="lib/bootstrap.bundle.min.js"></script>
     <script src="index.js" defer></script>
   </head>
   <body>
-    <div class="container">
-      <nav class="navbar navbar-expand-lg mb-3">
-        <div class="container-fluid">
-          <a class="navbar-brand" href="/app/"><h1>Goldfish Secrets</h1></a>
-          <div class="navbar-text">
-            Secure single-use sharing of secrets.<br />
-            <span class="small">
-              From <a href="https://github.com/digitalocean-labs/goldfish" target="_blank">digitalocean-labs</a>.
-            </span>
-          </div>
-        </div>
+    <main class="container">
+      <nav>
+        <hgroup>
+          <h2><a href="/app/">Goldfish Secrets</a></h2>
+          <p>Secure single-use sharing of secrets.</p>
+        </hgroup>
+        <ul>
+          <li>
+            <a class="tab-link" href="#encrypt-tab">Share</a>
+          </li>
+          <li>
+            <a class="tab-link" href="#decrypt-tab">Recover</a>
+          </li>
+        </ul>
       </nav>
-      <div id="error-alert" class="alert alert-danger initially-hidden" role="alert">??</div>
-      <ul id="tab-row" class="nav nav-tabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button
-            id="encrypt-tab-btn"
-            class="nav-link active"
-            type="button"
-            role="tab"
-            data-bs-toggle="tab"
-            data-bs-target="#encrypt-tab">
-            Share
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button
-            id="decrypt-tab-btn"
-            class="nav-link"
-            type="button"
-            role="tab"
-            data-bs-toggle="tab"
-            data-bs-target="#decrypt-tab">
-            Recover
-          </button>
-        </li>
-      </ul>
-      <div class="tab-content">
-        <div id="encrypt-tab" class="tab-pane active" role="tabpanel" tabindex="0">
+      <article id="error-alert" class="initially-hidden">???</article>
+      <section id="encrypt-tab" class="tab-body initially-hidden">
+        <article>
           <form method="post">
             <fieldset>
-              <div class="row mt-3">
-                <div class="col-lg-10 mb-3">
-                  <div class="form-floating">
-                    <textarea
-                      id="encrypt-value"
-                      class="form-control focus-target"
-                      placeholder="Secret text to share ..."
-                      maxlength="2048"
-                      required></textarea>
-                    <label for="encrypt-value">Secret text to share</label>
-                  </div>
-                </div>
-                <div class="col-lg-2 mb-3">
-                  <div class="vstack gap-3">
-                    <div class="form-floating">
-                      <select id="encrypt-ttl" class="form-select" required>
-                        <option value="">Choose ...</option>
-                        <option value="1">1 hour</option>
-                        <option value="2">2 hours</option>
-                        <option value="4">4 hours</option>
-                        <option value="8">8 hours</option>
-                        <option value="12">12 hours</option>
-                        <option value="24">24 hours</option>
-                        <option value="48">48 hours</option>
-                        <option value="72">72 hours</option>
-                      </select>
-                      <label for="encrypt-ttl">Expires in</label>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-lg">Share</button>
-                  </div>
-                </div>
-              </div>
+              <label>
+                Secret text to share:
+                <textarea
+                  id="encrypt-value"
+                  class="focus-target"
+                  placeholder="Required..."
+                  maxlength="2048"
+                  required></textarea>
+              </label>
+              <label>
+                Expires in:
+                <select id="encrypt-ttl" required>
+                  <option value="">Choose ...</option>
+                  <option value="1">1 hour</option>
+                  <option value="2">2 hours</option>
+                  <option value="4">4 hours</option>
+                  <option value="8">8 hours</option>
+                  <option value="12">12 hours</option>
+                  <option value="24">24 hours</option>
+                  <option value="48">48 hours</option>
+                  <option value="72">72 hours</option>
+                </select>
+              </label>
+              <button type="submit">Share</button>
             </fieldset>
           </form>
-          <div id="encrypt-result" class="initially-hidden">
-            <div class="card">
-              <div class="card-body">
-                <p class="card-title">Share this url with someone so that they may recover your shared text:</p>
-                <pre class="copy-me">??</pre>
-              </div>
-              <div class="card-footer">
-                Please note that this url can only be recovered once and will expire in
-                <span class="expire-in">??</span> on <span class="expire-at">??</span> if not used.
-              </div>
-            </div>
-          </div>
-        </div>
-        <div id="decrypt-tab" class="tab-pane" role="tabpanel" tabindex="0">
+        </article>
+        <article id="encrypt-result" class="initially-hidden">
+          <header>Share this URL with someone so that they may recover your shared text:</header>
+          <pre class="copy-me">??</pre>
+          <footer>
+            Please note that this url can only be recovered once and will expire in
+            <span class="expire-in">??</span> on <span class="expire-at">??</span> if not used.
+          </footer>
+        </article>
+      </section>
+      <section id="decrypt-tab" class="tab-body initially-hidden">
+        <article>
           <form method="post">
             <fieldset>
-              <div class="row mt-3">
-                <div class="col-lg-10 mb-3">
-                  <div class="form-floating">
-                    <input
-                      type="text"
-                      id="decrypt-key"
-                      class="form-control focus-target"
-                      placeholder="Shared Key ..."
-                      required />
-                    <label for="decrypt-key">Shared Key</label>
-                  </div>
-                </div>
-                <div class="col-lg-2 mb-3">
-                  <button type="submit" class="btn btn-primary btn-lg w-100 h-100">Recover</button>
-                </div>
-              </div>
+              <label>
+                Shared key to recover:
+                <input id="decrypt-key" type="text" class="focus-target" placeholder="Required..." required />
+              </label>
+              <button type="submit">Recover</button>
             </fieldset>
           </form>
-          <div id="decrypt-result" class="initially-hidden">
-            <div class="card">
-              <div class="card-body">
-                <p class="card-title">Shared secret text:</p>
-                <pre class="copy-me">??</pre>
-              </div>
-              <div class="card-footer">
-                Please copy this text to a safe place as the above Shared Key has now expired and cannot be recovered
-                again.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        </article>
+        <article id="decrypt-result" class="initially-hidden">
+          <header>Shared secret text:</header>
+          <pre class="copy-me">??</pre>
+          <footer>
+            Please copy this text to a safe place as the above shared key has now expired and cannot be recovered again.
+          </footer>
+        </article>
+      </section>
+    </main>
   </body>
 </html>

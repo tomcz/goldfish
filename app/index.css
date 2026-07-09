@@ -1,57 +1,53 @@
-#encrypt-result,
-#decrypt-result {
-  margin-bottom: 3em;
-}
-
-#encrypt-value {
-  height: 10em;
-}
-
-#encrypt-ttl:invalid {
-  color: gray;
-}
-
-div.card pre {
-  margin: 0;
-  padding: 1em;
-  border: 1px solid #dee2e6;
-  white-space: pre-wrap;
-  white-space: -moz-pre-wrap;
-  word-break: break-all;
-  position: relative;
-}
-
-div.card pre.copy-me:hover {
-  cursor: copy;
-  color: #d63384;
-}
-
-div.card pre.copy-me:hover:after {
-  content: "Copy";
-  color: #0d6efd;
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-}
-
-div.card pre.copy-me.is-copied:after {
-  content: "Copied";
-  color: #0d6efd;
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-}
-
 .initially-hidden {
   display: none;
 }
 
-div.navbar-text {
-  text-align: right;
+#error-alert {
+  color: var(--pico-form-element-invalid-focus-color);
 }
 
-@media only screen and (max-width: 490px) {
-  div.navbar-text {
-    text-align: left !important;
-  }
+hgroup a {
+  color: unset;
+  text-decoration: unset;
+}
+
+fieldset {
+  margin-bottom: 0;
+}
+
+fieldset button:last-child {
+  margin-bottom: 0;
+}
+
+#encrypt-value {
+  height: 10rem;
+}
+
+pre.copy-me {
+  position: relative;
+  padding: var(--pico-block-spacing-vertical) var(--pico-block-spacing-horizontal);
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin-bottom: 0;
+}
+
+pre.copy-me:hover {
+  color: var(--pico-form-element-valid-focus-color);
+  cursor: copy;
+}
+
+pre.copy-me:hover:after {
+  content: "Copy";
+  color: var(--pico-primary);
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+}
+
+pre.copy-me.is-copied:after {
+  content: "Copied";
+  color: var(--pico-primary);
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
 }
