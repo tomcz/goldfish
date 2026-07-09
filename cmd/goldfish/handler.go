@@ -25,6 +25,7 @@ func newHandler(secrets secretStore, limits limiter.Store) http.Handler {
 	mux.Handle("/app/", staticCacheControl(http.StripPrefix("/app", http.FileServer(app.FS))))
 	mux.Handle("POST /push", rate.Handle(dynamicCacheControl(setSecret(secrets))))
 	mux.Handle("POST /pull", rate.Handle(dynamicCacheControl(getSecret(secrets))))
+	mux.Handle("GET /version", dynamicCacheControl(versionHandler()))
 	return circuitBreaker(panicRecovery(csrfMiddleware(mux)))
 }
 
@@ -198,6 +199,12 @@ func parseSetRequest(r *http.Request) (*secretWithTTL, error) {
 		Secret: secret,
 		TTL:    time.Duration(ttlHours) * time.Hour,
 	}, nil
+}
+
+func versionHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		writeSuccess(w, version)
+	}
 }
 
 func writeSuccess(w http.ResponseWriter, msg string) {
