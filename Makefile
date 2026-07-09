@@ -5,7 +5,7 @@ precommit: clean format lint test compile
 
 .PHONY: format
 format:
-	goimports -w -local github.com/digitalocean-labs/goldfish .
+	golangci-lint fmt
 ifneq ($(shell which npx),)
 	npx prettier --print-width 120 --bracket-same-line --write "app/*.(js|css|html)"
 endif
@@ -47,7 +47,7 @@ bundle:
 
 .PHONY: local-redis
 local-redis:
-	docker run --rm -e 'ALLOW_EMPTY_PASSWORD=yes' -p "127.0.0.1:6379:6379" -it bitnami/redis:7.4.1
+	docker run --rm -p "127.0.0.1:6379:6379" -it redis:7-alpine
 
 .PHONY: publish
 publish: docker-build docker-push

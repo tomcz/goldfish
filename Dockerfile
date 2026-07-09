@@ -1,4 +1,4 @@
-FROM golang:1.25 AS build-stage
+FROM golang:1.26 AS build-stage
 
 # from Makefile
 ARG GITCOMMIT
@@ -26,5 +26,7 @@ ENV BACKEND_STORE=redis
 
 # PID files are not useful in containers
 ENV PID_FILE=skip
+
+ENV LISTEN_ADDR=0.0.0.0:3000
 
 CMD ["/app/goldfish"]

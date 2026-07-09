@@ -75,7 +75,7 @@ func main() {
 			&cli.StringFlag{
 				Name:        "addr",
 				Usage:       "Server listen address",
-				Value:       ":3000",
+				Value:       "127.0.0.1:3000",
 				Category:    "Application",
 				Destination: &listenAddr,
 				Sources:     cli.EnvVars("LISTEN_ADDR"),
