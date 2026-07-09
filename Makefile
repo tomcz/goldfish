@@ -53,27 +53,33 @@ bundle:
 local-redis:
 	docker run --rm -p "127.0.0.1:6379:6379" -it redis:7-alpine
 
-.PHONY: publish
-publish: docker-build docker-push
-
-.PHONY: docker-build
-docker-build:
-ifndef IMAGE_BASE
-	$(error "Please provide a IMAGE_BASE.")
-endif
-	docker build --pull --platform=linux/amd64 --build-arg GITCOMMIT=${GITCOMMIT} --tag ${IMAGE_BASE}:${GITCOMMIT} --tag ${IMAGE_BASE}:latest .
-
-.PHONY: docker-push
-docker-push:
-ifndef IMAGE_BASE
-	$(error "Please provide a IMAGE_BASE.")
-endif
-	docker push ${IMAGE_BASE}:${GITCOMMIT}
-	docker push ${IMAGE_BASE}:latest
-
 .PHONY: docker-run
-docker-run:
-ifndef IMAGE_BASE
-	$(error "Please provide a IMAGE_BASE.")
+docker-run: container
+	docker-compose up
+
+.PHONY: container
+container:
+	docker build --platform linux/amd64 --build-arg "GITCOMMIT=${GITCOMMIT}" --tag localhost/goldfish .
+
+.PHONY: publish
+publish: container
+ifdef REGISTRY_ENDPOINT
+	docker tag localhost/goldfish:latest ${REGISTRY_ENDPOINT}/goldfish:${GITCOMMIT}
+	docker tag localhost/goldfish:latest ${REGISTRY_ENDPOINT}/goldfish:latest
+	docker push ${REGISTRY_ENDPOINT}/goldfish:${GITCOMMIT}
+	docker push ${REGISTRY_ENDPOINT}/goldfish:latest
+else
+	$(error "Please define a REGISTRY_ENDPOINT")
 endif
-	docker run --rm -e REDIS_ADDR -e REDIS_USER -e REDIS_PASS -e REDIS_TLS -p "127.0.0.1:3000:3000" -it ${IMAGE_BASE}:latest
+
+.PHONY: registry-login
+registry-login:
+ifdef REGISTRY_NAME
+	doctl registries login ${REGISTRY_NAME} --expiry-seconds 600
+else
+	$(error "Please define a REGISTRY_NAME")
+endif
+
+.PHONY: verify
+verify:
+	./verify.sh ${GITCOMMIT}
