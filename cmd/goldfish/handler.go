@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"errors"
 	"fmt"
 	log "log/slog"
+	"net"
 	"net/http"
 	"net/url"
 	"runtime/debug"
@@ -12,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/felixge/httpsnoop"
 	"github.com/sethvargo/go-limiter"
 	"github.com/streadway/handy/breaker"
 
@@ -26,7 +29,56 @@ func newHandler(secrets secretStore, limits limiter.Store) http.Handler {
 	mux.Handle("POST /push", rate.Handle(dynamicCacheControl(setSecret(secrets))))
 	mux.Handle("POST /pull", rate.Handle(dynamicCacheControl(getSecret(secrets))))
 	mux.Handle("GET /version", dynamicCacheControl(versionHandler()))
-	return circuitBreaker(panicRecovery(csrfMiddleware(mux)))
+	return accessLogger(circuitBreaker(panicRecovery(csrfMiddleware(mux))))
+}
+
+func accessLogger(next http.Handler) http.Handler {
+	if !logAccess {
+		return next
+	}
+	headers := limitHeadersSlice()
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		metrics := httpsnoop.CaptureMetrics(next, w, r)
+
+		fields := []log.Attr{
+			log.String("req_host", r.Host),
+			log.String("req_method", r.Method),
+			log.String("req_uri", r.RequestURI),
+			log.String("req_remote_addr", remoteAddr(r, headers)),
+			log.String("req_user_agent", r.UserAgent()),
+			log.Int64("res_duration_ms", metrics.Duration.Milliseconds()),
+			log.Int64("res_duration_ns", metrics.Duration.Nanoseconds()),
+			log.Int("res_status", metrics.Code),
+		}
+		if loc := w.Header().Get("Location"); loc != "" {
+			fields = append(fields, log.String("res_location", loc))
+		}
+		if metrics.Written > 0 {
+			fields = append(fields, log.Int64("res_size", metrics.Written))
+		}
+		level := log.LevelInfo
+		if metrics.Code >= 500 {
+			level = log.LevelError
+		} else if metrics.Code >= 400 && metrics.Code != 404 {
+			level = log.LevelWarn
+		}
+		ctx := context.WithoutCancel(r.Context())
+		log.LogAttrs(ctx, level, "request", fields...)
+	})
+}
+
+func remoteAddr(r *http.Request, headers []string) string {
+	for _, name := range headers {
+		value := r.Header.Get(name)
+		if value != "" {
+			return value
+		}
+	}
+	remoteHost, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		remoteHost = r.RemoteAddr
+	}
+	return remoteHost
 }
 
 func staticCacheControl(next http.Handler) http.Handler {

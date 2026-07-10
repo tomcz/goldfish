@@ -22,11 +22,16 @@ func newRateLimiter(store limiter.Store) *httplimit.Middleware {
 	return mw
 }
 
-func newLimiterKeyFunc() httplimit.KeyFunc {
+func limitHeadersSlice() []string {
 	var headers []string
 	if len(limitHeaders) > 0 {
 		headers = strings.Split(limitHeaders, ",")
 	}
+	return headers
+}
+
+func newLimiterKeyFunc() httplimit.KeyFunc {
+	headers := limitHeadersSlice()
 	keyFunc := httplimit.IPKeyFunc(headers...)
 	if storeType != redisStoreType {
 		return keyFunc

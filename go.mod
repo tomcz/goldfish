@@ -4,6 +4,7 @@ go 1.26
 
 require (
 	github.com/alicebob/miniredis/v2 v2.35.0
+	github.com/felixge/httpsnoop v1.1.0
 	github.com/gomodule/redigo v1.9.3
 	github.com/mattn/go-sqlite3 v1.14.47
 	github.com/sethvargo/go-limiter v1.1.0

@@ -41,6 +41,7 @@ var (
 
 	logLevel  string
 	logFormat string
+	logAccess bool
 
 	showShutdown bool
 
@@ -216,6 +217,13 @@ func main() {
 				Category:    "Logging",
 				Destination: &logFormat,
 				Sources:     cli.EnvVars("LOG_FORMAT"),
+			},
+			&cli.BoolFlag{
+				Name:        "log-access",
+				Usage:       "Enable access logging (disabled by default)",
+				Category:    "Logging",
+				Destination: &logAccess,
+				Sources:     cli.EnvVars("LOG_ACCESS"),
 			},
 		},
 	}

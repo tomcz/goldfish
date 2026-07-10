@@ -44,6 +44,7 @@ GLOBAL OPTIONS:
 
    Logging
 
+   --log-access          Enable access logging (disabled by default) [$LOG_ACCESS]
    --log-format value    Structured log format, one of "plain", "text", or "json" (default: "plain") [$LOG_FORMAT]
    --log-level severity  Log severity level, one of "debug", "info", "warn", or "error" (default: "info") [$LOG_LEVEL]
 
