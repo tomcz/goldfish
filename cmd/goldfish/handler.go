@@ -21,6 +21,10 @@ import (
 	"github.com/digitalocean-labs/goldfish/app"
 )
 
+type contextKey string
+
+const reqMetadataKey = contextKey("request.metadata")
+
 func newHandler(secrets secretStore, limits limiter.Store) http.Handler {
 	mux := http.NewServeMux()
 	rate := newRateLimiter(limits)
@@ -38,7 +42,10 @@ func accessLogger(next http.Handler) http.Handler {
 	}
 	headers := limitHeadersSlice()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		metrics := httpsnoop.CaptureMetrics(next, w, r)
+		md := make(map[string]string)
+		ctx := context.WithValue(r.Context(), reqMetadataKey, md)
+
+		metrics := httpsnoop.CaptureMetrics(next, w, r.WithContext(ctx))
 
 		fields := []log.Attr{
 			log.String("req_host", r.Host),
@@ -56,14 +63,16 @@ func accessLogger(next http.Handler) http.Handler {
 		if metrics.Written > 0 {
 			fields = append(fields, log.Int64("res_size", metrics.Written))
 		}
+		for k, v := range md {
+			fields = append(fields, log.String(k, v))
+		}
 		level := log.LevelInfo
 		if metrics.Code >= 500 {
 			level = log.LevelError
 		} else if metrics.Code >= 400 && metrics.Code != 404 {
 			level = log.LevelWarn
 		}
-		ctx := context.WithoutCancel(r.Context())
-		log.LogAttrs(ctx, level, "request", fields...)
+		log.LogAttrs(context.WithoutCancel(ctx), level, "request", fields...)
 	})
 }
 
@@ -126,7 +135,7 @@ func panicRecovery(next http.Handler) http.Handler {
 			if p := recover(); p != nil {
 				stack := string(debug.Stack())
 				err := fmt.Errorf("panic: %v; stack: %s", p, stack)
-				internalError(w, err)
+				writeError(w, r, err, http.StatusInternalServerError)
 			}
 		}()
 		next.ServeHTTP(w, r)
@@ -172,9 +181,7 @@ func csrfCheck(r *http.Request) error {
 func csrfMiddleware(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := csrfCheck(r); err != nil {
-			errorID := newErrorID()
-			log.Error("csrf check failed", "err_id", errorID, "err", err)
-			http.Error(w, fmt.Sprintf("Error ID: %s", errorID), http.StatusForbidden)
+			writeError(w, r, err, http.StatusForbidden)
 			return
 		}
 		next.ServeHTTP(w, r)
@@ -190,7 +197,7 @@ func getSecret(store secretStore) http.HandlerFunc {
 		}
 		secret, err := store.getSecret(r.Context(), key)
 		if err != nil {
-			internalError(w, err)
+			writeError(w, r, err, http.StatusInternalServerError)
 			return
 		}
 		if secret == "" {
@@ -210,7 +217,7 @@ func setSecret(store secretStore) http.HandlerFunc {
 		}
 		key, err := store.setSecret(r.Context(), secret)
 		if err != nil {
-			internalError(w, err)
+			writeError(w, r, err, http.StatusInternalServerError)
 			return
 		}
 		writeSuccess(w, key)
@@ -266,10 +273,15 @@ func writeSuccess(w http.ResponseWriter, msg string) {
 	fmt.Fprint(w, msg)
 }
 
-func internalError(w http.ResponseWriter, err error) {
+func writeError(w http.ResponseWriter, r *http.Request, err error, statusCode int) {
 	errorID := newErrorID()
-	log.Error("request failed", "err_id", errorID, "err", err)
-	http.Error(w, fmt.Sprintf("Error ID: %s", errorID), http.StatusInternalServerError)
+	if md, ok := r.Context().Value(reqMetadataKey).(map[string]string); ok {
+		md["req_error_id"] = errorID
+		md["req_error"] = err.Error()
+	} else {
+		log.Error("request failed", "err_id", errorID, "err", err)
+	}
+	http.Error(w, fmt.Sprintf("Error ID: %s", errorID), statusCode)
 }
 
 func newErrorID() string {
