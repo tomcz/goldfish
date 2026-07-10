@@ -2,18 +2,18 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	log "log/slog"
 	"net/http"
 	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
-	"github.com/tomcz/gotools/errgroup"
 	"github.com/tomcz/gotools/quiet"
+	"github.com/tomcz/gotools/reloader"
+	"github.com/tomcz/gotools/runner"
 	"github.com/urfave/cli/v3"
 )
 
@@ -220,10 +220,7 @@ func main() {
 		},
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-
-	if err = app.Run(ctx, os.Args); err != nil {
+	if err = app.Run(context.Background(), os.Args); err != nil {
 		log.Error("Failed", "err", err)
 		os.Exit(1)
 	}
@@ -234,6 +231,9 @@ func main() {
 
 func startService(ctx context.Context, _ *cli.Command) error {
 	showShutdown = true
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	if err := writePidFile(); err != nil {
 		return err
@@ -258,26 +258,38 @@ func startService(ctx context.Context, _ *cli.Command) error {
 		ReadHeaderTimeout: time.Minute, // CWE-400 (slowloris) use nginx timeout
 	}
 
-	group, ctx := errgroup.NewContext(ctx)
-	group.Go(func() error {
-		ll := log.With("addr", listenAddr)
-		if tlsCertFile != "" && tlsKeyFile != "" {
-			ll.Info("Starting HTTPS listener")
-			return server.ListenAndServeTLS(tlsCertFile, tlsKeyFile)
-		}
+	app := runner.New()
+	app.CleanupTimeout(server.Shutdown, gracefulTimeout)
+	app.Run(func() error { return listenAndServe(ctx, server) })
+	return app.Wait()
+}
+
+func listenAndServe(ctx context.Context, server *http.Server) error {
+	var err error
+	ll := log.With("addr", listenAddr)
+	if tlsCertFile != "" && tlsKeyFile != "" {
+		ll.Info("Starting HTTPS listener")
+		err = listenAndServeTLS(ctx, server)
+	} else {
 		ll.Info("Starting HTTP listener")
-		return server.ListenAndServe()
-	})
-	group.Go(func() error {
-		<-ctx.Done()
-		quiet.CloseWithTimeout(server.Shutdown, gracefulTimeout)
-		return nil
-	})
-	err = group.Wait()
-	if err != nil && errors.Is(err, http.ErrServerClosed) {
+		err = server.ListenAndServe()
+	}
+	if errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}
 	return err
+}
+
+func listenAndServeTLS(ctx context.Context, server *http.Server) error {
+	loader, err := reloader.New(ctx, tlsCertFile, tlsKeyFile, reloader.WithLogger(log.With("component", "tls")))
+	if err != nil {
+		return err
+	}
+	server.TLSConfig = &tls.Config{
+		MinVersion:     tls.VersionTLS13,
+		GetCertificate: loader.GetCertificate,
+	}
+	return server.ListenAndServeTLS("", "")
 }
 
 func writePidFile() error {

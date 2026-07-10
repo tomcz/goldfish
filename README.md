@@ -32,7 +32,7 @@ GLOBAL OPTIONS:
 
    Application
 
-   --addr value           Server listen address (default: ":3000") [$LISTEN_ADDR]
+   --addr value           Server listen address (default: "127.0.0.1:3000") [$LISTEN_ADDR]
    --backend storage      Backend to use for secret storage, either "sqlite" or "redis" (default: "sqlite") [$BACKEND_STORE]
    --breaker-ratio value  Circuit-breaker failure ratio; zero or less to disable the circuit-breaker (default: 0.1) [$BREAKER_RATIO]
    --pid-file path        PID file path; use "skip" to disable file creation (default: "/app/goldfish.pid") [$PID_FILE]
