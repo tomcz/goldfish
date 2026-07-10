@@ -8,4 +8,6 @@ services:
     depends_on:
       - redis
   redis:
-    image: redis:7-alpine
+    image: valkey/valkey:8
+    ports:
+      - "127.0.0.1:6379:6379"

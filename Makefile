@@ -51,7 +51,7 @@ bundle:
 
 .PHONY: local-redis
 local-redis:
-	docker run --rm -p "127.0.0.1:6379:6379" -it redis:7-alpine
+	docker-compose up redis
 
 .PHONY: docker-run
 docker-run: container
