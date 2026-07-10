@@ -2,6 +2,11 @@ header.container {
   padding-bottom: 0;
 }
 
+header.container li.logo a {
+  text-decoration: unset;
+  color: unset;
+}
+
 main.container {
   padding-top: 0;
 }
@@ -10,11 +15,6 @@ footer.container {
   font-size: 0.8rem;
   text-align: center;
   color: var(--pico-muted-color);
-}
-
-hgroup a {
-  color: unset;
-  text-decoration: unset;
 }
 
 #error-alert {

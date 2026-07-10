@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <title>Goldfish</title>
+    <link rel="icon" href="lib/goldfish.png" />
     <link rel="stylesheet" href="lib/pico.indigo.min.css" />
     <link rel="stylesheet" href="index.css" />
     <script src="index.js" defer></script>
@@ -12,10 +13,14 @@
   <body>
     <header class="container">
       <nav>
-        <hgroup>
-          <h2><a href="/app/">Goldfish Secrets</a></h2>
-          <p>Secure single-use sharing of secrets.</p>
-        </hgroup>
+        <ul>
+          <li class="logo">
+            <a href="/app/">
+              <img src="lib/goldfish-bigger.png" alt="Goldfish" />
+              <strong>Secure single-use sharing of secrets</strong>
+            </a>
+          </li>
+        </ul>
         <ul>
           <li>
             <a class="tab-link" href="#encrypt-tab">Share</a>
@@ -90,8 +95,16 @@
       </section>
     </main>
     <footer class="container">
-      You can audit the source code of this application at
-      <a href="https://github.com/tomcz/goldfish" target="_blank">tomcz/goldfish</a>.
+      <p>
+        You can audit the source code of this application at
+        <a href="https://github.com/tomcz/goldfish" target="_blank">tomcz/goldfish</a>
+      </p>
+      <p>
+        Goldfish icons created by
+        <a href="https://www.flaticon.com/free-icons/goldfish" target="_blank" title="goldfish icons">
+          Freepik - Flaticon
+        </a>
+      </p>
     </footer>
   </body>
 </html>
