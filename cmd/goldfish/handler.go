@@ -95,7 +95,11 @@ func staticCacheControl(next http.Handler) http.Handler {
 		headers := w.Header()
 		// Ref: https://web.dev/articles/http-cache
 		if app.Embedded {
-			headers.Set("Cache-Control", "no-cache")
+			if strings.Contains(r.RequestURI, "/lib/") {
+				headers.Set("Cache-Control", "max-age=3600, must-revalidate")
+			} else {
+				headers.Set("Cache-Control", "no-cache")
+			}
 		} else {
 			headers.Set("Cache-Control", "no-store")
 		}
