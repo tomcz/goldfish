@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/honeycombio/libhoney-go"
+	"github.com/tomcz/gotools/honeylogger"
 	"github.com/tomcz/gotools/quiet"
 	"github.com/tomcz/gotools/reloader"
 	"github.com/tomcz/gotools/runner"
@@ -39,13 +41,16 @@ var (
 	storeRedisNS     string
 	storeRedisTLS    string
 
-	logLevel  string
-	logFormat string
-	logAccess bool
+	logLevel     string
+	logFormat    string
+	logAccess    bool
+	honeyApiKey  string
+	honeyDataset string
 
-	showShutdown bool
+	showShutdown  bool
+	closeLibhoney bool
 
-	version string
+	version string // set by build
 )
 
 const (
@@ -225,16 +230,36 @@ func main() {
 				Destination: &logAccess,
 				Sources:     cli.EnvVars("LOG_ACCESS"),
 			},
+			&cli.StringFlag{
+				Name:        "honey-api-key",
+				Usage:       "Optional honeycomb.io key to their Events API",
+				Category:    "Logging",
+				Destination: &honeyApiKey,
+				Sources:     cli.EnvVars("HONEY_API_KEY"),
+			},
+			&cli.StringFlag{
+				Name:        "honey-dataset",
+				Usage:       "Optional honeycomb.io event dataset name",
+				Category:    "Logging",
+				Destination: &honeyDataset,
+				Sources:     cli.EnvVars("HONEY_DATASET"),
+			},
 		},
 	}
 
-	if err = app.Run(context.Background(), os.Args); err != nil {
+	var exitCode int
+	err = app.Run(context.Background(), os.Args)
+	if err != nil {
 		log.Error("Failed", "err", err)
-		os.Exit(1)
+		exitCode = 1
 	}
 	if showShutdown {
 		log.Info("Shutdown")
 	}
+	if closeLibhoney {
+		libhoney.Close()
+	}
+	os.Exit(exitCode)
 }
 
 func startService(ctx context.Context, _ *cli.Command) error {
@@ -335,17 +360,35 @@ func setupLogging(ctx context.Context, _ *cli.Command) (context.Context, error) 
 	default:
 		level = log.LevelInfo
 	}
-	args := []any{"build", version}
+
+	var handler log.Handler
+	opts := &log.HandlerOptions{Level: level}
 	switch logFormat {
 	case "text":
-		opts := &log.HandlerOptions{Level: level}
-		h := log.NewTextHandler(os.Stderr, opts)
-		log.SetDefault(log.New(h).With(args...))
+		handler = log.NewTextHandler(os.Stderr, opts)
 	case "json":
-		opts := &log.HandlerOptions{Level: level}
-		h := log.NewJSONHandler(os.Stderr, opts)
-		log.SetDefault(log.New(h).With(args...))
-	default:
+		handler = log.NewJSONHandler(os.Stderr, opts)
+	}
+	if honeyApiKey != "" && honeyDataset != "" {
+		err := libhoney.Init(libhoney.Config{
+			APIKey:  honeyApiKey,
+			Dataset: honeyDataset,
+		})
+		if err != nil {
+			return nil, err
+		}
+		closeLibhoney = true
+		events := &honeylogger.Handler{Level: level}
+		if handler == nil {
+			handler = log.NewTextHandler(os.Stderr, opts)
+		}
+		handler = log.NewMultiHandler(handler, events)
+	}
+
+	args := []any{"build", version}
+	if handler != nil {
+		log.SetDefault(log.New(handler).With(args...))
+	} else {
 		log.SetLogLoggerLevel(level)
 		log.SetDefault(log.Default().With(args...))
 	}

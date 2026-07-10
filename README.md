@@ -44,9 +44,11 @@ GLOBAL OPTIONS:
 
    Logging
 
-   --log-access          Enable access logging (disabled by default) [$LOG_ACCESS]
-   --log-format value    Structured log format, one of "plain", "text", or "json" (default: "plain") [$LOG_FORMAT]
-   --log-level severity  Log severity level, one of "debug", "info", "warn", or "error" (default: "info") [$LOG_LEVEL]
+   --honey-api-key string  Optional honeycomb.io key to their Events API [$HONEY_API_KEY]
+   --honey-dataset string  Optional honeycomb.io event dataset name [$HONEY_DATASET]
+   --log-access            Enable access logging (disabled by default) [$LOG_ACCESS]
+   --log-format value      Structured log format, one of "plain", "text", or "json" (default: "plain") [$LOG_FORMAT]
+   --log-level severity    Log severity level, one of "debug", "info", "warn", or "error" (default: "info") [$LOG_LEVEL]
 
    Rate-limiter
 
