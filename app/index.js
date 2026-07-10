@@ -265,7 +265,7 @@ if (setDecryptKeyFromLocation()) {
 fetch("/version")
   .then(handleFetchResponse)
   .then((version) => {
-    const elt = document.querySelector("footer.container a");
+    const elt = document.getElementById("source-link");
     elt.href = `${elt.href}/tree/${version.trim()}`;
   })
   .catch((ex) => {
