@@ -9,10 +9,13 @@ ENV CGO_ENABLED=0
 
 WORKDIR /build
 
-COPY ./app/ app/
-COPY ./cmd/ cmd/
 COPY go.mod .
 COPY go.sum .
+
+RUN go mod download
+
+COPY ./app/ app/
+COPY ./cmd/ cmd/
 
 RUN go build -tags prod -ldflags "-s -w -X main.version=${GITCOMMIT}" -o target/ ./cmd/...
 
