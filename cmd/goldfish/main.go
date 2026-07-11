@@ -265,8 +265,7 @@ func main() {
 	if err != nil {
 		log.Error("Failed", "err", err)
 		exitCode = 1
-	}
-	if showShutdown {
+	} else if showShutdown {
 		log.Info("Shutdown")
 	}
 	if closeLibhoney {
