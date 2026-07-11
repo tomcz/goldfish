@@ -23,6 +23,10 @@ footer.container {
 
 #error-alert {
   color: var(--pico-form-element-invalid-focus-color);
+  border: var(--pico-border-width) solid var(--pico-form-element-invalid-border-color);
+  border-radius: var(--pico-border-radius);
+  padding: var(--pico-block-spacing-vertical) var(--pico-block-spacing-horizontal);
+  margin-bottom: var(--pico-spacing);
 }
 
 #encrypt-value {
