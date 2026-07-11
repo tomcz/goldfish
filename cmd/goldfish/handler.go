@@ -66,12 +66,7 @@ func accessLogger(next http.Handler) http.Handler {
 		for k, v := range md {
 			fields = append(fields, log.String(k, v))
 		}
-		level := log.LevelInfo
-		if metrics.Code >= 500 {
-			level = log.LevelError
-		} else if metrics.Code >= 400 && metrics.Code != 404 {
-			level = log.LevelWarn
-		}
+		level := statusCodeLevel(metrics.Code)
 		log.LogAttrs(context.WithoutCancel(ctx), level, "request", fields...)
 	})
 }
@@ -88,6 +83,16 @@ func remoteAddr(r *http.Request, headers []string) string {
 		remoteHost = r.RemoteAddr
 	}
 	return remoteHost
+}
+
+func statusCodeLevel(code int) log.Level {
+	if code >= 500 {
+		return log.LevelError
+	}
+	if code >= 400 && code != 404 {
+		return log.LevelWarn
+	}
+	return log.LevelInfo
 }
 
 func staticCacheControl(next http.Handler) http.Handler {
@@ -283,19 +288,14 @@ func writeError(w http.ResponseWriter, r *http.Request, err error, statusCode in
 		md["err_id"] = errorID
 		md["err"] = err.Error()
 	} else {
-		level := log.LevelWarn
-		if statusCode >= 500 {
-			level = log.LevelError
-		}
-		attrs := []log.Attr{
+		log.LogAttrs(r.Context(), statusCodeLevel(statusCode), "request failed",
 			log.String("req_uri", r.RequestURI),
 			log.String("req_remote_addr", remoteAddr(r, limitHeadersSlice())),
 			log.String("req_user_agent", r.UserAgent()),
 			log.Int("res_status", statusCode),
 			log.String("err_id", errorID),
 			log.String("err", err.Error()),
-		}
-		log.LogAttrs(r.Context(), level, "request failed", attrs...)
+		)
 	}
 	http.Error(w, fmt.Sprintf("Error ID: %s", errorID), statusCode)
 }
