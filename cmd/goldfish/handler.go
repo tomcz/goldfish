@@ -280,10 +280,22 @@ func writeSuccess(w http.ResponseWriter, msg string) {
 func writeError(w http.ResponseWriter, r *http.Request, err error, statusCode int) {
 	errorID := newErrorID()
 	if md, ok := r.Context().Value(reqMetadataKey).(map[string]string); ok {
-		md["req_error_id"] = errorID
-		md["req_error"] = err.Error()
+		md["err_id"] = errorID
+		md["err"] = err.Error()
 	} else {
-		log.Error("request failed", "err_id", errorID, "err", err)
+		level := log.LevelWarn
+		if statusCode >= 500 {
+			level = log.LevelError
+		}
+		attrs := []log.Attr{
+			log.String("req_uri", r.RequestURI),
+			log.String("req_remote_addr", remoteAddr(r, limitHeadersSlice())),
+			log.String("req_user_agent", r.UserAgent()),
+			log.Int("res_status", statusCode),
+			log.String("err_id", errorID),
+			log.String("err", err.Error()),
+		}
+		log.LogAttrs(r.Context(), level, "request failed", attrs...)
 	}
 	http.Error(w, fmt.Sprintf("Error ID: %s", errorID), statusCode)
 }
