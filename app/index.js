@@ -11,8 +11,16 @@ const passwordLength = 42;
 const passwordAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 decryptKey.pattern = `[${passwordAlphabet}]{${passwordLength}}x[${passwordAlphabet}]{${passwordLength}}`;
 
+function selfLink(suffix) {
+  const url = window.location.origin + window.location.pathname;
+  if (url.endsWith("/") && suffix.startsWith("/")) {
+    return url + suffix.substring(1);
+  }
+  return url + suffix;
+}
+
 function createDecryptLink(pwd, key) {
-  return `${window.location.origin}${window.location.pathname}#${pwd}x${key}`;
+  return selfLink("#" + pwd + "x" + key);
 }
 
 function parseDecryptKey() {
@@ -114,7 +122,7 @@ function setSecret(secret, ttl) {
     method: "POST",
     body: body,
   };
-  return fetch("/push", opts).then(handleFetchResponse);
+  return fetch(selfLink("/push"), opts).then(handleFetchResponse);
 }
 
 function getSecret(secretKey) {
@@ -124,7 +132,7 @@ function getSecret(secretKey) {
     method: "POST",
     body: body,
   };
-  return fetch("/pull", opts).then(handleFetchResponse);
+  return fetch(selfLink("/pull"), opts).then(handleFetchResponse);
 }
 
 function showElement(element) {
@@ -230,6 +238,10 @@ decryptKey.addEventListener("input", () => {
   }
 });
 
+document.querySelectorAll("nav li.logo a").forEach((elt) => {
+  elt.href = selfLink("");
+});
+
 document.querySelectorAll(".initially-hidden").forEach((elt) => {
   hideElement(elt); // take over hiding from css
   elt.classList.remove("initially-hidden");
@@ -262,7 +274,7 @@ if (setDecryptKeyFromLocation()) {
   showSection(document.getElementById("encrypt-tab"));
 }
 
-fetch("/version")
+fetch(selfLink("/version"))
   .then(handleFetchResponse)
   .then((version) => {
     const elt = document.getElementById("source-link");
