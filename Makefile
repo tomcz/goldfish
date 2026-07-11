@@ -39,11 +39,11 @@ compile-dev: target
 
 .PHONY: run
 run: compile
-	./target/goldfish
+	./target/goldfish --log-access
 
 .PHONY: dev
 dev: compile-dev
-	./target/goldfish
+	./target/goldfish --log-access
 
 .PHONY: bundle
 bundle:
