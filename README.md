@@ -1,6 +1,6 @@
 # Goldfish Secrets
 
-Browser-based, secure, single-use sharing of secrets, using a server-local SQLite database, or a remote Redis server, to store browser-encrypted secrets.
+Browser-based, secure, single-use sharing of secrets. Uses a server-local SQLite database or a remote Redis server to store browser-encrypted secrets.
 
 Please run our pre-commit checks to format, lint, and test the code:
 ```
