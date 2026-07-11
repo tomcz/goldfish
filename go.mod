@@ -12,11 +12,13 @@ require (
 	github.com/sethvargo/go-redisstore v0.3.0
 	github.com/streadway/handy v0.0.0-20200128134331-0f66f006fb2e
 	github.com/tomcz/gotools v0.19.1
+	github.com/urfave/cli-altsrc/v3 v3.1.0
 	github.com/urfave/cli/v3 v3.10.1
 	gotest.tools/v3 v3.5.2
 )
 
 require (
+	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/facebookgo/limitgroup v0.0.0-20150612190941-6abd8d71ec01 // indirect
 	github.com/facebookgo/muster v0.0.0-20150708232844-fd3d7953fd52 // indirect

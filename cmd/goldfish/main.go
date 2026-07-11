@@ -16,10 +16,14 @@ import (
 	"github.com/tomcz/gotools/quiet"
 	"github.com/tomcz/gotools/reloader"
 	"github.com/tomcz/gotools/runner"
+	altsrc "github.com/urfave/cli-altsrc/v3"
+	"github.com/urfave/cli-altsrc/v3/toml"
 	"github.com/urfave/cli/v3"
 )
 
 var (
+	configFile string
+
 	listenAddr   string
 	pidFilePath  string
 	breakerRatio float64
@@ -63,6 +67,10 @@ const (
 	redisTlsInsecure = "insecure"
 )
 
+func configFileOrEnvVar(fileKey, envKey string) cli.ValueSourceChain {
+	return cli.NewValueSourceChain(toml.TOML(fileKey, altsrc.NewStringPtrSourcer(&configFile)), cli.EnvVar(envKey))
+}
+
 func main() {
 	pname, err := os.Executable()
 	if err != nil {
@@ -79,12 +87,17 @@ func main() {
 		HideHelpCommand: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
+				Name:        "config",
+				Usage:       "TOML configuration `file`",
+				Destination: &configFile,
+			},
+			&cli.StringFlag{
 				Name:        "addr",
 				Usage:       "Server listen address",
 				Value:       "127.0.0.1:3000",
 				Category:    "Application",
 				Destination: &listenAddr,
-				Sources:     cli.EnvVars("LISTEN_ADDR"),
+				Sources:     configFileOrEnvVar("addr", "LISTEN_ADDR"),
 			},
 			&cli.StringFlag{
 				Name:        "pid-file",
@@ -92,7 +105,7 @@ func main() {
 				Value:       fmt.Sprintf("%s.pid", pname),
 				Category:    "Application",
 				Destination: &pidFilePath,
-				Sources:     cli.EnvVars("PID_FILE"),
+				Sources:     configFileOrEnvVar("pid-file", "PID_FILE"),
 			},
 			&cli.Float64Flag{
 				Name:        "breaker-ratio",
@@ -100,7 +113,7 @@ func main() {
 				Value:       0.1,
 				Category:    "Application",
 				Destination: &breakerRatio,
-				Sources:     cli.EnvVars("BREAKER_RATIO"),
+				Sources:     configFileOrEnvVar("breaker-ratio", "BREAKER_RATIO"),
 			},
 			&cli.StringFlag{
 				Name:        "backend",
@@ -108,7 +121,7 @@ func main() {
 				Value:       sqliteStoreType,
 				Category:    "Application",
 				Destination: &storeType,
-				Sources:     cli.EnvVars("BACKEND_STORE"),
+				Sources:     configFileOrEnvVar("backend", "BACKEND_STORE"),
 			},
 			&cli.StringFlag{
 				Name:        "sqlite-file",
@@ -116,7 +129,7 @@ func main() {
 				Value:       fmt.Sprintf("%s.db", pname),
 				Category:    "SQLite backend",
 				Destination: &storeSqliteFile,
-				Sources:     cli.EnvVars("SQLITE_FILE"),
+				Sources:     configFileOrEnvVar("sqlite-file", "SQLITE_FILE"),
 			},
 			&cli.DurationFlag{
 				Name:        "sqlite-clean",
@@ -124,7 +137,7 @@ func main() {
 				Value:       time.Hour,
 				Category:    "SQLite backend",
 				Destination: &storeSqliteClean,
-				Sources:     cli.EnvVars("SQLITE_CLEAN"),
+				Sources:     configFileOrEnvVar("sqlite-clean", "SQLITE_CLEAN"),
 			},
 			&cli.StringFlag{
 				Name:        "redis-addr",
@@ -132,35 +145,35 @@ func main() {
 				Value:       "localhost:6379",
 				Category:    "Redis backend",
 				Destination: &storeRedisAddr,
-				Sources:     cli.EnvVars("REDIS_ADDR"),
+				Sources:     configFileOrEnvVar("redis-addr", "REDIS_ADDR"),
 			},
 			&cli.StringFlag{
 				Name:        "redis-user",
 				Usage:       "Redis username, if required",
 				Category:    "Redis backend",
 				Destination: &storeRedisUser,
-				Sources:     cli.EnvVars("REDIS_USER"),
+				Sources:     configFileOrEnvVar("redis-user", "REDIS_USER"),
 			},
 			&cli.StringFlag{
 				Name:        "redis-pass",
 				Usage:       "Redis password, if required",
 				Category:    "Redis backend",
 				Destination: &storeRedisPass,
-				Sources:     cli.EnvVars("REDIS_PASS"),
+				Sources:     configFileOrEnvVar("redis-pass", "REDIS_PASS"),
 			},
 			&cli.IntFlag{
 				Name:        "redis-db",
 				Usage:       "Redis db `number`, if required",
 				Category:    "Redis backend",
 				Destination: &storeRedisDB,
-				Sources:     cli.EnvVars("REDIS_DB"),
+				Sources:     configFileOrEnvVar("redis-db", "REDIS_DB"),
 			},
 			&cli.StringFlag{
 				Name:        "redis-ns",
 				Usage:       "Redis namespace, if required",
 				Category:    "Redis backend",
 				Destination: &storeRedisNS,
-				Sources:     cli.EnvVars("REDIS_NS"),
+				Sources:     configFileOrEnvVar("redis-ns", "REDIS_NS"),
 			},
 			&cli.StringFlag{
 				Name:        "redis-tls",
@@ -168,21 +181,21 @@ func main() {
 				Value:       redisTlsOff,
 				Category:    "Redis backend",
 				Destination: &storeRedisTLS,
-				Sources:     cli.EnvVars("REDIS_TLS"),
+				Sources:     configFileOrEnvVar("redis-tls", "REDIS_TLS"),
 			},
 			&cli.StringFlag{
 				Name:        "tls-cert",
 				Usage:       "Server TLS certificate `file` path",
 				Category:    "HTTPS listener",
 				Destination: &tlsCertFile,
-				Sources:     cli.EnvVars("TLS_CERT_FILE"),
+				Sources:     configFileOrEnvVar("tls-cert", "TLS_CERT_FILE"),
 			},
 			&cli.StringFlag{
 				Name:        "tls-key",
 				Usage:       "Server TLS private key `file` path",
 				Category:    "HTTPS listener",
 				Destination: &tlsKeyFile,
-				Sources:     cli.EnvVars("TLS_KEY_FILE"),
+				Sources:     configFileOrEnvVar("tls-key", "TLS_KEY_FILE"),
 			},
 			&cli.Uint64Flag{
 				Name:        "limit-count",
@@ -190,7 +203,7 @@ func main() {
 				Value:       1000,
 				Category:    "Rate-limiter",
 				Destination: &limitCount,
-				Sources:     cli.EnvVars("RATE_LIMIT_COUNT"),
+				Sources:     configFileOrEnvVar("limit-count", "RATE_LIMIT_COUNT"),
 			},
 			&cli.DurationFlag{
 				Name:        "limit-period",
@@ -198,14 +211,14 @@ func main() {
 				Value:       time.Hour,
 				Category:    "Rate-limiter",
 				Destination: &limitPeriod,
-				Sources:     cli.EnvVars("RATE_LIMIT_PERIOD"),
+				Sources:     configFileOrEnvVar("limit-period", "RATE_LIMIT_PERIOD"),
 			},
 			&cli.StringFlag{
 				Name:        "limit-headers",
 				Usage:       "Comma-separated `list` of http request headers that can provide an IP address",
 				Category:    "Rate-limiter",
 				Destination: &limitHeaders,
-				Sources:     cli.EnvVars("RATE_LIMIT_HEADERS"),
+				Sources:     configFileOrEnvVar("limit-headers", "RATE_LIMIT_HEADERS"),
 			},
 			&cli.StringFlag{
 				Name:        "log-level",
@@ -213,7 +226,7 @@ func main() {
 				Value:       "info",
 				Category:    "Logging",
 				Destination: &logLevel,
-				Sources:     cli.EnvVars("LOG_LEVEL"),
+				Sources:     configFileOrEnvVar("log-level", "LOG_LEVEL"),
 			},
 			&cli.StringFlag{
 				Name:        "log-format",
@@ -221,28 +234,28 @@ func main() {
 				Value:       "plain",
 				Category:    "Logging",
 				Destination: &logFormat,
-				Sources:     cli.EnvVars("LOG_FORMAT"),
+				Sources:     configFileOrEnvVar("log-format", "LOG_FORMAT"),
 			},
 			&cli.BoolFlag{
 				Name:        "log-access",
 				Usage:       "Enable access logging (disabled by default)",
 				Category:    "Logging",
 				Destination: &logAccess,
-				Sources:     cli.EnvVars("LOG_ACCESS"),
+				Sources:     configFileOrEnvVar("log-access", "LOG_ACCESS"),
 			},
 			&cli.StringFlag{
 				Name:        "honey-api-key",
 				Usage:       "Optional honeycomb.io key to their Events API",
 				Category:    "Logging",
 				Destination: &honeyApiKey,
-				Sources:     cli.EnvVars("HONEY_API_KEY"),
+				Sources:     configFileOrEnvVar("honey-api-key", "HONEY_API_KEY"),
 			},
 			&cli.StringFlag{
 				Name:        "honey-dataset",
 				Usage:       "Optional honeycomb.io event dataset name",
 				Category:    "Logging",
 				Destination: &honeyDataset,
-				Sources:     cli.EnvVars("HONEY_DATASET"),
+				Sources:     configFileOrEnvVar("honey-dataset", "HONEY_DATASET"),
 			},
 		},
 	}

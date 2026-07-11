@@ -17,7 +17,7 @@ Running locally in development mode, using `app` assets directly from the filesy
 make dev
 ```
 
-Configuration options (command-line flags and environment variables):
+Configuration options (configuration file, environment variables, and command-line flags):
 ```
 $> /app/goldfish -h
 NAME:
@@ -27,6 +27,7 @@ USAGE:
    goldfish [global options]  
 
 GLOBAL OPTIONS:
+   --config file  TOML configuration file
    --help, -h     show help
    --version, -v  print the version
 
