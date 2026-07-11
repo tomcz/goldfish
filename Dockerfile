@@ -30,6 +30,7 @@ ENV BACKEND_STORE=redis
 # PID files are not useful in containers
 ENV PID_FILE=skip
 
+# Bind to all container interfaces so we can properly publish the port
 ENV LISTEN_ADDR=0.0.0.0:3000
 
 CMD ["/app/goldfish"]
