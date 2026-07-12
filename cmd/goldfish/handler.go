@@ -30,6 +30,7 @@ func newHandler(secrets secretStore, limits limiter.Store) http.Handler {
 	rate := newRateLimiter(limits)
 	mux.Handle("/", staticCacheControl(http.FileServer(app.FS)))
 	mux.Handle("/app/", http.RedirectHandler("/", http.StatusFound))
+	mux.Handle("/index.html", http.RedirectHandler("/", http.StatusFound))
 	mux.Handle("POST /push", rate.Handle(dynamicCacheControl(setSecret(secrets))))
 	mux.Handle("POST /pull", rate.Handle(dynamicCacheControl(getSecret(secrets))))
 	mux.Handle("GET /version", dynamicCacheControl(versionHandler()))

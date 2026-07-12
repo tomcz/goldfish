@@ -5,6 +5,8 @@
 :8080 {
 	redir / /goldfish/ 302
 
+  redir /goldfish /goldfish/ 302
+
 	handle_path /goldfish/* {
 		reverse_proxy http://app:3000
 	}
