@@ -11,3 +11,12 @@ services:
     image: valkey/valkey:8
     ports:
       - "127.0.0.1:6379:6379"
+  caddy:
+    image: caddy:2
+    ports:
+      - 127.0.0.1:8080:8080
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      - app
+      - redis

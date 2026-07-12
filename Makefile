@@ -53,8 +53,8 @@ bundle:
 local-redis:
 	docker-compose up redis
 
-.PHONY: docker-run
-docker-run: container
+.PHONY: compose
+compose:
 	docker-compose up
 
 .PHONY: container
