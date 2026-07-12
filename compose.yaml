@@ -14,7 +14,7 @@ services:
   caddy:
     image: caddy:2
     ports:
-      - 127.0.0.1:8080:8080
+      - "127.0.0.1:8080:8080"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
     depends_on:
