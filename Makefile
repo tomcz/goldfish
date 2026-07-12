@@ -17,6 +17,7 @@ tidy:
 .PHONY: lint
 lint:
 	golangci-lint run --build-tags prod
+	govulncheck ./...
 
 .PHONY: clean
 clean:
