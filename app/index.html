@@ -26,19 +26,19 @@
         </ul>
         <ul>
           <li>
-            <a class="tab-link" href="#encrypt-tab">Share</a>
+            <a class="tab-link" href="#share-tab">Share</a>
           </li>
           <li>
-            <a class="tab-link" href="#decrypt-tab">Recover</a>
+            <a class="tab-link" href="#recover-tab">Recover</a>
           </li>
         </ul>
       </nav>
     </header>
     <main class="container">
       <div id="error-alert" class="initially-hidden" role="alert">???</div>
-      <section id="encrypt-tab" class="tab-body initially-hidden">
+      <section id="share-tab" class="tab-body initially-hidden">
         <article>
-          <form method="post">
+          <form id="encrypt-form" method="post">
             <fieldset>
               <label>
                 Secret text to share:
@@ -52,7 +52,7 @@
               <label>
                 Expires in:
                 <select id="encrypt-ttl" required>
-                  <option value="">Choose ...</option>
+                  <option value="">Choose...</option>
                   <option value="1">1 hour</option>
                   <option value="2">2 hours</option>
                   <option value="4">4 hours</option>
@@ -76,9 +76,9 @@
           </footer>
         </article>
       </section>
-      <section id="decrypt-tab" class="tab-body initially-hidden">
+      <section id="recover-tab" class="tab-body initially-hidden">
         <article>
-          <form method="post">
+          <form id="decrypt-form" method="post">
             <fieldset>
               <label>
                 Shared key to recover:

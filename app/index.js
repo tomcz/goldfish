@@ -1,8 +1,8 @@
 "use strict";
 
 const errorAlert = document.getElementById("error-alert");
-const encryptForm = document.querySelector("#encrypt-tab form");
-const decryptForm = document.querySelector("#decrypt-tab form");
+const encryptForm = document.getElementById("encrypt-form");
+const decryptForm = document.getElementById("decrypt-form");
 const encryptResult = document.getElementById("encrypt-result");
 const decryptResult = document.getElementById("decrypt-result");
 const decryptKey = document.getElementById("decrypt-key");
@@ -261,9 +261,9 @@ document.querySelectorAll("a.tab-link").forEach((elt) => {
 });
 
 if (setDecryptKeyFromLocation()) {
-  showSection(document.getElementById("decrypt-tab"));
+  showSection(document.getElementById("recover-tab"));
 } else {
-  showSection(document.getElementById("encrypt-tab"));
+  showSection(document.getElementById("share-tab"));
 }
 
 fetch("version")
