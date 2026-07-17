@@ -4,6 +4,7 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     environment:
+      RATE_LIMIT_HEADERS: "X-Forwarded-For"
       REDIS_ADDR: redis:6379
       LOG_ACCESS: "true"
     depends_on:
