@@ -40,17 +40,17 @@ func newHandler(secrets secretStore, limits limiter.Store) http.Handler {
 	return remoteAddress(accessLogger(circuitBreaker(panicRecovery(csrfMiddleware(mux)))))
 }
 
-func remoteAddress(next http.Handler) http.Handler {
+func remoteAddress(next http.Handler) http.HandlerFunc {
 	headers := limitHeadersSlice()
 	keyFunc := httplimit.IPKeyFunc(headers...)
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		remoteAddr, err := keyFunc(r)
 		if err != nil {
 			remoteAddr = r.RemoteAddr
 		}
 		ctx := context.WithValue(r.Context(), reqRemoteAddr, remoteAddr)
 		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	}
 }
 
 func accessLogger(next http.Handler) http.Handler {
@@ -97,8 +97,8 @@ func statusCodeLevel(code int) log.Level {
 	return log.LevelInfo
 }
 
-func staticCacheControl(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func staticCacheControl(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		headers := w.Header()
 		// Ref: https://web.dev/articles/http-cache
 		if app.Embedded {
@@ -112,17 +112,17 @@ func staticCacheControl(next http.Handler) http.Handler {
 		}
 		setSecurityHeaders(headers)
 		next.ServeHTTP(w, r)
-	})
+	}
 }
 
-func dynamicCacheControl(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func dynamicCacheControl(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		headers := w.Header()
 		// Ref: https://web.dev/articles/http-cache
 		headers.Set("Cache-Control", "no-store")
 		setSecurityHeaders(headers)
 		next.ServeHTTP(w, r)
-	})
+	}
 }
 
 // Ref: https://blog.appcanary.com/2017/http-security-headers.html
@@ -140,8 +140,8 @@ func circuitBreaker(handler http.Handler) http.Handler {
 	return handler
 }
 
-func panicRecovery(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func panicRecovery(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if p := recover(); p != nil {
 				stack := string(debug.Stack())
@@ -150,7 +150,7 @@ func panicRecovery(next http.Handler) http.Handler {
 			}
 		}()
 		next.ServeHTTP(w, r)
-	})
+	}
 }
 
 var csrfSafeMethods = map[string]bool{
