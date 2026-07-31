@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -76,9 +75,8 @@ func main() {
 
 	var cfg appCfg
 	opts := []kong.Option{
-		// we don't expect this file to exist, but we need to configure a loader for the ConfigFile flag to work
-		kong.Configuration(kongtoml.Loader, fmt.Sprintf("/etc/goldfish-%s.toml", rand.Text())),
 		kong.Description("Webapp for browser-based one-time secret management."),
+		kong.Configuration(kongtoml.Loader),
 		kong.Vars{"pname": pname},
 	}
 	kong.Parse(&cfg, opts...)
