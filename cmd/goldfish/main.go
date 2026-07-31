@@ -8,6 +8,7 @@ import (
 	log "log/slog"
 	"net/http"
 	"os"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -57,11 +58,11 @@ type appCfg struct {
 	StoreRedisNS   string `group:"Redis backend" name:"redis-ns" env:"REDIS_NS" help:"Redis namespace, if required."`
 	StoreRedisTLS  string `group:"Redis backend" name:"redis-tls" env:"REDIS_TLS" default:"off" enum:"off,on,insecure" help:"One of 'off', 'on', or 'insecure'."`
 
-	LogLevel     string `group:"Logging" name:"log-level" env:"LOG_LEVEL" default:"info" enum:"debug,info,warn,error" help:"One of 'debug', 'info', 'warn', or 'error'."`
-	LogFormat    string `group:"Logging" name:"log-format" env:"LOG_FORMAT" default:"plain" enum:"plain,text,json" help:"One of 'plain', 'text', or 'json'."`
-	LogAccess    bool   `group:"Logging" name:"log-access" env:"LOG_ACCESS" help:"Enable access logging; disabled by default."`
-	HoneyApiKey  string `group:"Logging" name:"honey-api-key" env:"HONEY_API_KEY" help:"Optional honeycomb.io key to their Events API."`
-	HoneyDataset string `group:"Logging" name:"honey-dataset" env:"HONEY_DATASET" help:"Optional honeycomb.io event dataset name."`
+	LogLevel     log.Level `group:"Logging" name:"log-level" env:"LOG_LEVEL" default:"info" type:"level" help:"One of 'debug', 'info', 'warn', or 'error'."`
+	LogFormat    string    `group:"Logging" name:"log-format" env:"LOG_FORMAT" default:"plain" enum:"plain,text,json" help:"One of 'plain', 'text', or 'json'."`
+	LogAccess    bool      `group:"Logging" name:"log-access" env:"LOG_ACCESS" help:"Enable access logging; disabled by default."`
+	HoneyApiKey  string    `group:"Logging" name:"honey-api-key" env:"HONEY_API_KEY" help:"Optional honeycomb.io key to their Events API."`
+	HoneyDataset string    `group:"Logging" name:"honey-dataset" env:"HONEY_DATASET" help:"Optional honeycomb.io event dataset name."`
 
 	ShowVersion bool `short:"v" name:"version" help:"Show version and exit."`
 }
@@ -76,6 +77,7 @@ func main() {
 	var cfg appCfg
 	kong.Parse(&cfg,
 		kong.Description("Webapp for browser-based one-time secret management."),
+		kong.NamedMapper("level", kong.MapperFunc(levelMapper)),
 		kong.Configuration(kongtoml.Loader),
 		kong.Vars{"pname": pname},
 	)
@@ -189,21 +191,24 @@ func removePidFile(cfg appCfg) {
 	}
 }
 
-func setupLogging(cfg appCfg) (bool, error) {
-	var level log.Level
-	switch cfg.LogLevel {
-	case "debug":
-		level = log.LevelDebug
-	case "warn":
-		level = log.LevelWarn
-	case "error":
-		level = log.LevelError
-	default:
-		level = log.LevelInfo
+func levelMapper(c *kong.DecodeContext, target reflect.Value) error {
+	var value string
+	err := c.Scan.PopValueInto("level", &value)
+	if err != nil {
+		return err
 	}
+	var level log.Level
+	err = level.UnmarshalText([]byte(value))
+	if err != nil {
+		return err
+	}
+	target.Set(reflect.ValueOf(level))
+	return nil
+}
 
+func setupLogging(cfg appCfg) (bool, error) {
 	var handler log.Handler
-	opts := &log.HandlerOptions{Level: level}
+	opts := &log.HandlerOptions{Level: cfg.LogLevel}
 	switch cfg.LogFormat {
 	case "text":
 		handler = log.NewTextHandler(os.Stderr, opts)
@@ -221,7 +226,7 @@ func setupLogging(cfg appCfg) (bool, error) {
 			return false, err
 		}
 		closeLibhoney = true
-		events := &honeylogger.Handler{Level: level}
+		events := &honeylogger.Handler{Level: cfg.LogLevel}
 		if handler == nil {
 			handler = log.NewTextHandler(os.Stderr, opts)
 		}
@@ -232,7 +237,7 @@ func setupLogging(cfg appCfg) (bool, error) {
 	if handler != nil {
 		log.SetDefault(log.New(handler).With(args...))
 	} else {
-		log.SetLogLoggerLevel(level)
+		log.SetLogLoggerLevel(cfg.LogLevel)
 		log.SetDefault(log.Default().With(args...))
 	}
 	return closeLibhoney, nil
