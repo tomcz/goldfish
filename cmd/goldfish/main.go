@@ -74,12 +74,11 @@ func main() {
 	}
 
 	var cfg appCfg
-	opts := []kong.Option{
+	kong.Parse(&cfg,
 		kong.Description("Webapp for browser-based one-time secret management."),
 		kong.Configuration(kongtoml.Loader),
 		kong.Vars{"pname": pname},
-	}
-	kong.Parse(&cfg, opts...)
+	)
 
 	if cfg.ShowVersion {
 		fmt.Println(version)
