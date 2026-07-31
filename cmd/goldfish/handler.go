@@ -28,21 +28,20 @@ const (
 	reqMetadataKey = contextKey("request.metadata")
 )
 
-func newHandler(secrets secretStore, limits limiter.Store) http.Handler {
+func newHandler(cfg appCfg, secrets secretStore, limits limiter.Store) http.Handler {
 	mux := http.NewServeMux()
-	rate := newRateLimiter(limits)
+	rate := newRateLimiter(cfg, limits)
 	mux.Handle("/", staticCacheControl(http.FileServer(app.FS)))
 	mux.Handle("/app/", http.RedirectHandler("/", http.StatusFound))
 	mux.Handle("/index.html", http.RedirectHandler("/", http.StatusFound))
 	mux.Handle("POST /push", rate.Handle(dynamicCacheControl(setSecret(secrets))))
 	mux.Handle("POST /pull", rate.Handle(dynamicCacheControl(getSecret(secrets))))
 	mux.Handle("GET /version", dynamicCacheControl(versionHandler()))
-	return remoteAddress(accessLogger(circuitBreaker(panicRecovery(csrfMiddleware(mux)))))
+	return remoteAddress(cfg, accessLogger(cfg, circuitBreaker(cfg, panicRecovery(csrfMiddleware(mux)))))
 }
 
-func remoteAddress(next http.Handler) http.HandlerFunc {
-	headers := limitHeadersSlice()
-	keyFunc := httplimit.IPKeyFunc(headers...)
+func remoteAddress(cfg appCfg, next http.Handler) http.HandlerFunc {
+	keyFunc := httplimit.IPKeyFunc(cfg.LimitHeaders...)
 	return func(w http.ResponseWriter, r *http.Request) {
 		remoteAddr, err := keyFunc(r)
 		if err != nil {
@@ -53,8 +52,8 @@ func remoteAddress(next http.Handler) http.HandlerFunc {
 	}
 }
 
-func accessLogger(next http.Handler) http.Handler {
-	if !logAccess {
+func accessLogger(cfg appCfg, next http.Handler) http.Handler {
+	if !cfg.LogAccess {
 		return next
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -132,9 +131,9 @@ func setSecurityHeaders(headers http.Header) {
 	headers.Set("X-Frame-Options", "DENY")
 }
 
-func circuitBreaker(handler http.Handler) http.Handler {
-	if breakerRatio > 0 {
-		cb := breaker.NewBreaker(breakerRatio)
+func circuitBreaker(cfg appCfg, handler http.Handler) http.Handler {
+	if cfg.BreakerRatio > 0 {
+		cb := breaker.NewBreaker(cfg.BreakerRatio)
 		return breaker.Handler(cb, breaker.DefaultStatusCodeValidator, handler)
 	}
 	return handler

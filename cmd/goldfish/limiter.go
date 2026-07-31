@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/sethvargo/go-limiter"
 	"github.com/sethvargo/go-limiter/httplimit"
@@ -13,8 +12,8 @@ import (
 	"github.com/sethvargo/go-redisstore"
 )
 
-func newRateLimiter(store limiter.Store) *httplimit.Middleware {
-	mw, err := httplimit.NewMiddleware(store, newLimiterKeyFunc())
+func newRateLimiter(cfg appCfg, store limiter.Store) *httplimit.Middleware {
+	mw, err := httplimit.NewMiddleware(store, newLimiterKeyFunc(cfg))
 	if err != nil {
 		// store and key function are never nil here
 		panic(err)
@@ -22,18 +21,9 @@ func newRateLimiter(store limiter.Store) *httplimit.Middleware {
 	return mw
 }
 
-func limitHeadersSlice() []string {
-	var headers []string
-	if len(limitHeaders) > 0 {
-		headers = strings.Split(limitHeaders, ",")
-	}
-	return headers
-}
-
-func newLimiterKeyFunc() httplimit.KeyFunc {
-	headers := limitHeadersSlice()
-	keyFunc := httplimit.IPKeyFunc(headers...)
-	if storeType != redisStoreType {
+func newLimiterKeyFunc(cfg appCfg) httplimit.KeyFunc {
+	keyFunc := httplimit.IPKeyFunc(cfg.LimitHeaders...)
+	if cfg.StoreType != redisStoreType {
 		return keyFunc
 	}
 	return func(r *http.Request) (string, error) {
@@ -42,23 +32,23 @@ func newLimiterKeyFunc() httplimit.KeyFunc {
 			return "", err
 		}
 		data := sha256.Sum256([]byte(key))
-		return redisKey("h", fmt.Sprintf("%x", data)), nil
+		return redisKey(cfg.StoreRedisNS, "h", fmt.Sprintf("%x", data)), nil
 	}
 }
 
-func newLimiterStore() (limiter.Store, error) {
-	if limitCount == 0 {
+func newLimiterStore(cfg appCfg) (limiter.Store, error) {
+	if cfg.LimitCount == 0 {
 		return noopstore.New()
 	}
-	if storeType != redisStoreType {
+	if cfg.StoreType != redisStoreType {
 		return memorystore.New(&memorystore.Config{
-			Tokens:   limitCount,
-			Interval: limitPeriod,
+			Tokens:   cfg.LimitCount,
+			Interval: cfg.LimitPeriod,
 		})
 	}
 	return redisstore.New(&redisstore.Config{
-		Tokens:   limitCount,
-		Interval: limitPeriod,
-		Dial:     redisDialFunc,
+		Tokens:   cfg.LimitCount,
+		Interval: cfg.LimitPeriod,
+		Dial:     redisDialFunc(cfg),
 	})
 }

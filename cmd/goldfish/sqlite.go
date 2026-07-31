@@ -32,9 +32,9 @@ type sqliteStore struct {
 	now func() time.Time
 }
 
-func newSqliteStore(ctx context.Context) (secretStore, error) {
-	log.Info("Using SQLite secret store", "path", storeSqliteFile)
-	dsn := fmt.Sprintf("file:%s", storeSqliteFile)
+func newSqliteStore(ctx context.Context, cfg appCfg) (secretStore, error) {
+	log.Info("Using SQLite secret store", "path", cfg.StoreSqliteFile)
+	dsn := fmt.Sprintf("file:%s", cfg.StoreSqliteFile)
 	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func newSqliteStore(ctx context.Context) (secretStore, error) {
 		db:  db,
 		now: time.Now,
 	}
-	go regularDatabaseCleanup(ctx, db)
+	go regularDatabaseCleanup(ctx, db, cfg.StoreSqliteClean)
 	return store, nil
 }
 
@@ -79,8 +79,8 @@ func (s *sqliteStore) getSecret(ctx context.Context, key string) (string, error)
 	return secret, nil
 }
 
-func regularDatabaseCleanup(ctx context.Context, db *sql.DB) {
-	ticker := time.NewTicker(storeSqliteClean)
+func regularDatabaseCleanup(ctx context.Context, db *sql.DB, tick time.Duration) {
+	ticker := time.NewTicker(tick)
 	defer ticker.Stop()
 	for {
 		select {

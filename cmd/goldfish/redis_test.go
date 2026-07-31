@@ -23,7 +23,7 @@ func TestRedisRoundTrip(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	store := &redisStore{pool}
+	store := &redisStore{db: pool}
 	defer store.Close()
 
 	key, err := store.setSecret(ctx, &secretWithTTL{

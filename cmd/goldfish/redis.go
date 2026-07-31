@@ -13,17 +13,18 @@ import (
 
 type redisStore struct {
 	db *redis.Pool
+	ns string
 }
 
-func newRedisStore() secretStore {
-	log.Info("Using Redis secret store", "addr", storeRedisAddr, "tls", storeRedisTLS)
+func newRedisStore(cfg appCfg) secretStore {
+	log.Info("Using Redis secret store", "addr", cfg.StoreRedisAddr, "tls", cfg.StoreRedisTLS)
 	pool := &redis.Pool{
 		MaxIdle:      3,
 		IdleTimeout:  2 * time.Minute,
-		Dial:         redisDialFunc,
+		Dial:         redisDialFunc(cfg),
 		TestOnBorrow: redisTestFunc,
 	}
-	return &redisStore{pool}
+	return &redisStore{pool, cfg.StoreRedisNS}
 }
 
 func (r *redisStore) Close() error {
@@ -36,7 +37,7 @@ func (r *redisStore) setSecret(ctx context.Context, req *secretWithTTL) (string,
 
 	secretKey := newSecretKey()
 	ttl := int64(req.TTL.Seconds())
-	_, err := redis.DoContext(conn, ctx, "SET", redisKey("s", secretKey), req.Secret, "EX", ttl)
+	_, err := redis.DoContext(conn, ctx, "SET", redisKey(r.ns, "s", secretKey), req.Secret, "EX", ttl)
 	if err != nil {
 		return "", err
 	}
@@ -47,7 +48,7 @@ func (r *redisStore) getSecret(ctx context.Context, secretKey string) (string, e
 	conn := r.db.Get()
 	defer conn.Close()
 
-	secret, err := redis.String(redis.DoContext(conn, ctx, "GETDEL", redisKey("s", secretKey)))
+	secret, err := redis.String(redis.DoContext(conn, ctx, "GETDEL", redisKey(r.ns, "s", secretKey)))
 	if err != nil {
 		if errors.Is(err, redis.ErrNil) {
 			return "", nil
@@ -57,25 +58,27 @@ func (r *redisStore) getSecret(ctx context.Context, secretKey string) (string, e
 	return secret, nil
 }
 
-func redisDialFunc() (redis.Conn, error) {
-	var opts []redis.DialOption
-	if storeRedisUser != "" {
-		opts = append(opts, redis.DialUsername(storeRedisUser))
+func redisDialFunc(cfg appCfg) func() (redis.Conn, error) {
+	return func() (redis.Conn, error) {
+		var opts []redis.DialOption
+		if cfg.StoreRedisUser != "" {
+			opts = append(opts, redis.DialUsername(cfg.StoreRedisUser))
+		}
+		if cfg.StoreRedisPass != "" {
+			opts = append(opts, redis.DialPassword(cfg.StoreRedisPass))
+		}
+		if cfg.StoreRedisDB > 0 {
+			opts = append(opts, redis.DialDatabase(cfg.StoreRedisDB))
+		}
+		if tlsCfg := redisTLS(cfg); tlsCfg != nil {
+			opts = append(opts, redis.DialUseTLS(true), redis.DialTLSConfig(tlsCfg))
+		}
+		return redis.Dial("tcp", cfg.StoreRedisAddr, opts...)
 	}
-	if storeRedisPass != "" {
-		opts = append(opts, redis.DialPassword(storeRedisPass))
-	}
-	if storeRedisDB > 0 {
-		opts = append(opts, redis.DialDatabase(storeRedisDB))
-	}
-	if tlsCfg := redisTLS(); tlsCfg != nil {
-		opts = append(opts, redis.DialUseTLS(true), redis.DialTLSConfig(tlsCfg))
-	}
-	return redis.Dial("tcp", storeRedisAddr, opts...)
 }
 
-func redisTLS() *tls.Config {
-	switch storeRedisTLS {
+func redisTLS(cfg appCfg) *tls.Config {
+	switch cfg.StoreRedisTLS {
 	case redisTlsOn:
 		return &tls.Config{MinVersion: tls.VersionTLS12}
 	case redisTlsInsecure:
@@ -90,9 +93,9 @@ func redisTestFunc(c redis.Conn, _ time.Time) error {
 	return err
 }
 
-func redisKey(prefix, key string) string {
-	if storeRedisNS != "" {
-		return fmt.Sprintf("%s:%s:%s", storeRedisNS, prefix, key)
+func redisKey(namespace, prefix, key string) string {
+	if namespace != "" {
+		return fmt.Sprintf("%s:%s:%s", namespace, prefix, key)
 	}
 	return fmt.Sprintf("%s:%s", prefix, key)
 }

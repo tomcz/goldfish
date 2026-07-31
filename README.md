@@ -17,57 +17,49 @@ Running locally in development mode, using `app` assets directly from the filesy
 make dev
 ```
 
-Configuration options (configuration file, environment variables, and command-line flags):
+Configuration options ([TOML](https://toml.io/en/) configuration file, environment variables, and command-line flags):
 ```
 $> /app/goldfish -h
-NAME:
-   goldfish - Webapp for browser-based one-time secret management
+Usage: goldfish [flags]
 
-USAGE:
-   goldfish [global options]  
+Webapp for browser-based one-time secret management.
 
-GLOBAL OPTIONS:
-   --config file  TOML configuration file
-   --help, -h     show help
-   --version, -v  print the version
+Flags:
+  -h, --help           Show context-sensitive help.
+  -c, --config=FILE    TOML configuration file.
+  -v, --version        Show version and exit.
 
-   Application
+Application
+  --addr="127.0.0.1:3000"           Server listen address ($LISTEN_ADDR).
+  --pid-file="/app/goldfish.pid"    PID file path; use 'skip' to disable file creation ($PID_FILE).
+  --breaker-ratio=0.1               Circuit-breaker failure ratio; use zero or less to disable the circuit-breaker ($BREAKER_RATIO).
+  --backend="sqlite"                Backend to use for secret storage; either 'sqlite' or 'redis' ($BACKEND_STORE).
 
-   --addr value           Server listen address (default: "127.0.0.1:3000") [$LISTEN_ADDR]
-   --backend storage      Backend to use for secret storage, either "sqlite" or "redis" (default: "sqlite") [$BACKEND_STORE]
-   --breaker-ratio value  Circuit-breaker failure ratio; zero or less to disable the circuit-breaker (default: 0.1) [$BREAKER_RATIO]
-   --pid-file path        PID file path; use "skip" to disable file creation (default: "/app/goldfish.pid") [$PID_FILE]
+HTTPS listener
+  --tls-cert=FILE    Server TLS certificate file path ($TLS_CERT_FILE).
+  --tls-key=FILE     Server TLS private key file path ($TLS_KEY_FILE).
 
-   HTTPS listener
+Rate-limiter
+  --limit-count=1000            Maximum number of per-IP requests; use zero to disable the limiter ($RATE_LIMIT_COUNT).
+  --limit-period=1h             Window of time for per-IP requests ($RATE_LIMIT_PERIOD).
+  --limit-headers=header,...    Comma-separated list of HTTP request headers that can provide the remote IP address ($RATE_LIMIT_HEADERS).
 
-   --tls-cert file  Server TLS certificate file path [$TLS_CERT_FILE]
-   --tls-key file   Server TLS private key file path [$TLS_KEY_FILE]
+SQLite backend
+  --sqlite-file="/app/goldfish.db"    Database file path ($SQLITE_FILE).
+  --sqlite-clean=1h                   Interval for removal of unaccessed expired secrets ($SQLITE_CLEAN).
 
-   Logging
+Redis backend
+  --redis-addr="localhost:6379"    Redis server address ($REDIS_ADDR).
+  --redis-user=STRING              Redis username, if required ($REDIS_USER).
+  --redis-pass=STRING              Redis password, if required ($REDIS_PASS).
+  --redis-db=INT                   Redis db number, if required ($REDIS_DB).
+  --redis-ns=STRING                Redis namespace, if required ($REDIS_NS).
+  --redis-tls="off"                One of 'off', 'on', or 'insecure' ($REDIS_TLS).
 
-   --honey-api-key string  Optional honeycomb.io key to their Events API [$HONEY_API_KEY]
-   --honey-dataset string  Optional honeycomb.io event dataset name [$HONEY_DATASET]
-   --log-access            Enable access logging (disabled by default) [$LOG_ACCESS]
-   --log-format value      Structured log format, one of "plain", "text", or "json" (default: "plain") [$LOG_FORMAT]
-   --log-level severity    Log severity level, one of "debug", "info", "warn", or "error" (default: "info") [$LOG_LEVEL]
-
-   Rate-limiter
-
-   --limit-count number  Maximum number of requests, per IP; zero to disable the limiter (default: 1000) [$RATE_LIMIT_COUNT]
-   --limit-headers list  Comma-separated list of http request headers that can provide an IP address [$RATE_LIMIT_HEADERS]
-   --limit-period time   Window of time for requests, per IP (default: 1h0m0s) [$RATE_LIMIT_PERIOD]
-
-   Redis backend
-
-   --redis-addr value  Redis address (default: "localhost:6379") [$REDIS_ADDR]
-   --redis-db number   Redis db number, if required (default: 0) [$REDIS_DB]
-   --redis-ns value    Redis namespace, if required [$REDIS_NS]
-   --redis-pass value  Redis password, if required [$REDIS_PASS]
-   --redis-tls value   Either "off", "on", or "insecure" (default: "off") [$REDIS_TLS]
-   --redis-user value  Redis username, if required [$REDIS_USER]
-
-   SQLite backend
-
-   --sqlite-clean value  Interval for removal of unaccessed expired secrets (default: 1h0m0s) [$SQLITE_CLEAN]
-   --sqlite-file path    Database file path (default: "/app/goldfish.db") [$SQLITE_FILE]
+Logging
+  --log-level="info"        One of 'debug', 'info', 'warn', or 'error' ($LOG_LEVEL).
+  --log-format="plain"      One of 'plain', 'text', or 'json' ($LOG_FORMAT).
+  --log-access              Enable access logging; disabled by default ($LOG_ACCESS).
+  --honey-api-key=STRING    Optional honeycomb.io key to their Events API ($HONEY_API_KEY).
+  --honey-dataset=STRING    Optional honeycomb.io event dataset name ($HONEY_DATASET).
 ```

@@ -36,13 +36,13 @@ func newSecretKey() string {
 	return string(key)
 }
 
-func newSecretStore(ctx context.Context) (secretStore, error) {
-	switch storeType {
+func newSecretStore(ctx context.Context, cfg appCfg) (secretStore, error) {
+	switch cfg.StoreType {
 	case sqliteStoreType:
-		return newSqliteStore(ctx)
+		return newSqliteStore(ctx, cfg)
 	case redisStoreType:
-		return newRedisStore(), nil
+		return newRedisStore(cfg), nil
 	default:
-		return nil, fmt.Errorf("unknown backend storage %q", storeType)
+		return nil, fmt.Errorf("unknown backend storage %q", cfg.StoreType)
 	}
 }
