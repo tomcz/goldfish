@@ -21,9 +21,6 @@ import (
 	"github.com/tomcz/gotools/runner"
 )
 
-// set by build
-var version string
-
 const (
 	gracefulTimeout  = 100 * time.Millisecond
 	skipPidFile      = "skip"
@@ -64,7 +61,7 @@ type appCfg struct {
 	HoneyApiKey  string    `group:"Logging" name:"honey-api-key" env:"HONEY_API_KEY" help:"Optional honeycomb.io key to their Events API."`
 	HoneyDataset string    `group:"Logging" name:"honey-dataset" env:"HONEY_DATASET" help:"Optional honeycomb.io event dataset name."`
 
-	ShowVersion bool `short:"v" name:"version" help:"Show version and exit."`
+	ShowVersion versionFlag `short:"v" name:"version" help:"Show version and exit."`
 }
 
 func main() {
@@ -81,11 +78,6 @@ func main() {
 		kong.Configuration(kongtoml.Loader),
 		kong.Vars{"pname": pname},
 	)
-
-	if cfg.ShowVersion {
-		fmt.Println(version)
-		os.Exit(0)
-	}
 
 	closeLibhoney, err := setupLogging(cfg)
 	if err != nil {
