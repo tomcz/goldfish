@@ -17,7 +17,7 @@ Running locally in development mode, using `app` assets directly from the filesy
 make dev
 ```
 
-Configuration options ([TOML](https://toml.io/en/) configuration file, environment variables, and command-line flags):
+Configuration options - [TOML](https://toml.io/en/) configuration file, environment variables, and command-line flags:
 ```
 $> /app/goldfish -h
 Usage: goldfish [flags]
