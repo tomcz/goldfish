@@ -46,10 +46,6 @@ run: compile
 dev: compile-dev
 	./target/goldfish --log-access
 
-.PHONY: bundle
-bundle:
-	gzip -k target/goldfish
-
 .PHONY: local-redis
 local-redis:
 	docker run --rm -p 127.0.0.1:6379:6379 --rm -it valkey/valkey:8
