@@ -7,7 +7,7 @@ precommit: clean tidy format lint test compile
 format:
 	golangci-lint fmt
 ifneq ($(shell which npx),)
-	npx prettier --print-width 120 --bracket-same-line --write app/
+	npx prettier --print-width 120 --bracket-same-line --write "app/*.(js|css|html)"
 endif
 
 .PHONY: tidy
