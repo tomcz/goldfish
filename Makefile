@@ -52,11 +52,7 @@ bundle:
 
 .PHONY: local-redis
 local-redis:
-	docker-compose up redis
-
-.PHONY: compose
-compose:
-	docker-compose up
+	docker run --rm -p 127.0.0.1:6379:6379 --rm -it valkey/valkey:8
 
 .PHONY: container
 container:
