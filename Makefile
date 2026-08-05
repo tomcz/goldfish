@@ -4,10 +4,17 @@ GITCOMMIT := $(shell git rev-parse --short=7 HEAD 2>/dev/null)
 precommit: clean tidy format lint test compile
 
 .PHONY: format
-format:
+format: format-app
 	golangci-lint fmt
-ifneq ($(shell which npx),)
-	npx prettier --print-width 120 --bracket-same-line --write "app/*.(js|css|html)"
+
+.PHONY: format-app
+format-app:
+ifneq ($(shell which prettier),)
+	prettier --write app/
+else ifneq ($(shell which npx),)
+	npx prettier --write app/
+else
+	echo "Please install prettier or npx."
 endif
 
 .PHONY: tidy
