@@ -4,11 +4,11 @@ GITCOMMIT := $(shell git rev-parse --short=7 HEAD 2>/dev/null)
 precommit: clean tidy format lint test compile
 
 .PHONY: format
-format: format-app
+format: prettier
 	golangci-lint fmt
 
-.PHONY: format-app
-format-app:
+.PHONY: prettier
+prettier:
 ifneq ($(shell which prettier),)
 	prettier --write app/
 else ifneq ($(shell which npx),)
