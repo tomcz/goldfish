@@ -43,7 +43,7 @@ compile: target
 
 .PHONY: compile-dev
 compile-dev: target
-	go build -tags dev -ldflags "-s -w -X main.version=${GITCOMMIT}" -o target/ ./cmd/...
+	go build -ldflags "-s -w -X main.version=${GITCOMMIT}" -o target/ ./cmd/...
 
 .PHONY: run
 run: compile
