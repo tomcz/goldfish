@@ -59,20 +59,20 @@ func (r *redisStore) getSecret(ctx context.Context, secretKey string) (string, e
 }
 
 func redisDialFunc(cfg appCfg) func() (redis.Conn, error) {
+	var opts []redis.DialOption
+	if cfg.StoreRedisUser != "" {
+		opts = append(opts, redis.DialUsername(cfg.StoreRedisUser))
+	}
+	if cfg.StoreRedisPass != "" {
+		opts = append(opts, redis.DialPassword(cfg.StoreRedisPass))
+	}
+	if cfg.StoreRedisDB > 0 {
+		opts = append(opts, redis.DialDatabase(cfg.StoreRedisDB))
+	}
+	if tlsCfg := redisTLS(cfg); tlsCfg != nil {
+		opts = append(opts, redis.DialUseTLS(true), redis.DialTLSConfig(tlsCfg))
+	}
 	return func() (redis.Conn, error) {
-		var opts []redis.DialOption
-		if cfg.StoreRedisUser != "" {
-			opts = append(opts, redis.DialUsername(cfg.StoreRedisUser))
-		}
-		if cfg.StoreRedisPass != "" {
-			opts = append(opts, redis.DialPassword(cfg.StoreRedisPass))
-		}
-		if cfg.StoreRedisDB > 0 {
-			opts = append(opts, redis.DialDatabase(cfg.StoreRedisDB))
-		}
-		if tlsCfg := redisTLS(cfg); tlsCfg != nil {
-			opts = append(opts, redis.DialUseTLS(true), redis.DialTLSConfig(tlsCfg))
-		}
 		return redis.Dial("tcp", cfg.StoreRedisAddr, opts...)
 	}
 }
